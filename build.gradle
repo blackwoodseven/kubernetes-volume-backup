@@ -1,17 +1,38 @@
+buildscript {
+    dependencies {
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
+    }
+}
+
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.1.2"
     id "application"
 }
 
+apply plugin: 'org.junit.platform.gradle.plugin'
+
 repositories {
     mavenCentral()
+    maven { url "http://dl.bintray.com/jetbrains/spek"}
 }
 
 dependencies {
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: '1.1.2-4'
+    testCompile group: 'org.jetbrains.kotlin', name: 'kotlin-reflect', version: '1.1.2-4'
+    testCompile group: 'org.jetbrains.kotlin', name: 'kotlin-test', version: '1.1.2-4'
+    testCompile group: 'org.jetbrains.spek', name: 'spek-api', version: '1.1.2'
+    testRuntime group: 'org.jetbrains.spek', name: 'spek-junit-platform-engine', version: '1.1.2'
 }
 
 mainClassName = "com.blackwoodseven.kubernetes.volume_backup.MainKt"
+
+junitPlatform {
+    filters {
+        engines {
+            include 'spek'
+        }
+    }
+}
 
 task downloadDependencies(type: Exec) {
     configurations.testRuntime.files
