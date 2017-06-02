@@ -1,0 +1,19 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.1.2"
+    id "application"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: '1.1.2-4'
+}
+
+mainClassName = "com.blackwoodseven.kubernetes.volume_backup.MainKt"
+
+task downloadDependencies(type: Exec) {
+    configurations.testRuntime.files
+    commandLine 'echo', 'Downloaded all dependencies'
+}

@@ -1,0 +1,6 @@
+version: "2.1"
+services:
+  kubernetes-volume-backup:
+    build: .
+    volumes:
+    - .:/kubernetes-volume-backup
