@@ -4,3 +4,6 @@ services:
     build: .
     volumes:
     - .:/kubernetes-volume-backup
+    environment:
+      BACKUP_DIRECTORIES: test
+      AWS_DEFAULT_REGION: eu-west-1
