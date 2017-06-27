@@ -1,7 +1,10 @@
 package com.blackwoodseven.kubernetes.volume_backup
 
 import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.module.kotlin.*
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.github.kittinunf.fuel.Fuel
+import java.io.File
 
 data class volumeMount(
         val name: String,
@@ -73,5 +76,7 @@ fun findVolumeNames(containerName: String, podDescription: String): Map<String, 
 }
 
 fun fetchPodDescription(podName: String, namespace: String) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    val token = File("/var/run/secrets/kubernetes.io/serviceaccount/token").readText()
+    val cert = File("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt").readText()
+    Fuel.get("https://kubernetes/").header(Pair("Authentication", "token $token"))
 }
