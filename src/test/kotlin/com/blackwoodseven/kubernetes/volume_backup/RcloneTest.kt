@@ -14,7 +14,7 @@ class RcloneTest : Spek ({
                 val namespace = "default"
                 val pvcName = "very-important-files-volume"
 
-                val command = build_rclone_command(backupPath, target, namespace, pvcName)
+                val command = buildRcloneCommand(backupPath, target, namespace, pvcName)
 
                 assertEquals("rclone sync \"$backupPath\" $target:$namespace/$pvcName", command)
             }
@@ -25,7 +25,7 @@ class RcloneTest : Spek ({
                 val namespace = "default"
                 val pvcName = "very-important-files-volume"
 
-                val command = build_rclone_command(backupPath, target, namespace, pvcName)
+                val command = buildRcloneCommand(backupPath, target, namespace, pvcName)
 
                 assertEquals("rclone sync \"$backupPath\" $target:$namespace/$pvcName", command)
             }

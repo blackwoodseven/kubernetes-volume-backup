@@ -1,6 +1,6 @@
 package com.blackwoodseven.kubernetes.volume_backup
 
-fun build_rclone_command(backupPath: String, target: String, namespace: String, pvcName: String): String {
+fun buildRcloneCommand(backupPath: String, target: String, namespace: String, pvcName: String): String {
     return "rclone sync \"$backupPath\" $target:$namespace/$pvcName"
 }
 
