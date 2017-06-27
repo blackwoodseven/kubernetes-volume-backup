@@ -5,8 +5,8 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import kotlin.test.assertEquals
 
-val yml = """
-{
+class KubernetesTest : Spek({
+    val yml = """{
   "apiVersion": "v1",
   "kind": "Pod",
   "metadata": {
@@ -303,7 +303,6 @@ val yml = """
 }
 """
 
-class KubernetesTest : Spek({
     describe("Kubernetes") {
         describe("findVolumeNames") {
             it("should extract the relevant information about backup volumes") {
