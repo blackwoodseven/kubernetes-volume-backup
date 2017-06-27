@@ -8,7 +8,7 @@ import org.jetbrains.spek.api.dsl.it
 class MainTest : Spek({
     describe("the system should be sane") {
         it("should calculate correctly") {
-            assertEquals(2 + 2, 4)
+            assertEquals(4, 2 + 2)
         }
     }
 })
