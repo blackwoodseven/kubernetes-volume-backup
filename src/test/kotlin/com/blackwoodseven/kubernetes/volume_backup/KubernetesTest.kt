@@ -6,7 +6,7 @@ import org.jetbrains.spek.api.dsl.it
 import kotlin.test.assertEquals
 
 class KubernetesTest : Spek({
-    val yml = """{
+    val podJson = """{
   "apiVersion": "v1",
   "kind": "Pod",
   "metadata": {
@@ -304,9 +304,54 @@ class KubernetesTest : Spek({
 """
 
     describe("Kubernetes") {
-        describe("findVolumeNames") {
+        val podDescription = PodDescription(
+                PodSpec(
+                        listOf(
+                                Container(
+                                        "grafana",
+                                        listOf(
+                                                VolumeMount("cert-volume", "/certs"),
+                                                VolumeMount("grafana-storage", "/var/lib/grafana"),
+                                                VolumeMount("default-token-7wqfm", "/var/run/secrets/kubernetes.io/serviceaccount")
+                                        )
+                                ),
+                                Container(
+                                        "configmap-watcher",
+                                        listOf(
+                                                VolumeMount("cert-volume", "/certs"),
+                                                VolumeMount("default-token-7wqfm", "/var/run/secrets/kubernetes.io/serviceaccount")
+                                        )
+                                )
+                        ),
+                        listOf(
+                                Volume(
+                                        "cert-volume",
+                                        null
+                                ),
+                                Volume(
+                                        "grafana-storage",
+                                        PersistentVolumeClaim(
+                                                "grafana-volume"
+                                        )
+                                ),
+                                Volume(
+                                        "default-token-7wqfm",
+                                        null
+                                )
+                        )
+                )
+        )
+
+        describe("parsePodJson") {
+            it("should parse the podJson into the expected PodDescription") {
+                val actualPodDescription = parsePodJson(podJson)
+                assertEquals(podDescription, actualPodDescription)
+            }
+        }
+
+        describe("matchMountPathsToPVCs") {
             it("should extract the relevant information about backup volumes") {
-                val volumesToBackup = findVolumeNames("grafana", yml)
+                val volumesToBackup = matchMountPathsToPVCs("grafana", podDescription)
                 assertEquals(hashMapOf(
                     "/var/lib/grafana" to "grafana-volume"
                 ), volumesToBackup)

@@ -6,15 +6,14 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.kittinunf.fuel.Fuel
 import java.io.File
 
-data class volumeMount(
+data class VolumeMount(
         val name: String,
-        val mountPath: String,
-        val readOnly: Boolean
+        val mountPath: String
 )
 
 data class Container(
         val name: String,
-        val volumeMounts: List<volumeMount>
+        val volumeMounts: List<VolumeMount>
 
 )
 
@@ -28,8 +27,8 @@ data class Volume(
 )
 
 data class PodSpec(
-        val volumes: List<Volume>,
-        val containers: List<Container>
+        val containers: List<Container>,
+        val volumes: List<Volume>
 )
 
 data class PodDescription(
@@ -37,17 +36,22 @@ data class PodDescription(
 )
 
 fun GetVolumeNames(podName: String, namespace: String): String {
-    fetchPodDescription(podName, namespace)
+    val podJson = fetchPodDescription(podName, namespace)
+    val podDescription = parsePodJson(podJson)
+
+
     return "hej"
 }
 
-fun findVolumeNames(containerName: String, podDescription: String): Map<String, String> {
+fun parsePodJson(podDescription: String): PodDescription {
     val mapper = jacksonObjectMapper()
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-    val parsedPodDescription = mapper.readValue<PodDescription>(podDescription)
+    return mapper.readValue<PodDescription>(podDescription)
+}
 
-    val spec = parsedPodDescription.spec
+fun matchMountPathsToPVCs(containerName: String, podDescription: PodDescription): Map<String, String> {
+    val spec = podDescription.spec
 
     // Extract this container's volume mounts
     val volumeMounts = spec.containers.first { it.name == containerName }.volumeMounts
@@ -75,8 +79,9 @@ fun findVolumeNames(containerName: String, podDescription: String): Map<String, 
     return mountPathToClaimName
 }
 
-fun fetchPodDescription(podName: String, namespace: String) {
+fun fetchPodDescription(podName: String, namespace: String): String {
     val token = File("/var/run/secrets/kubernetes.io/serviceaccount/token").readText()
     val cert = File("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt").readText()
-    Fuel.get("https://kubernetes/").header(Pair("Authentication", "token $token"))
+    Fuel.get("https://kubernetes/api/v1/namespaces/$namespace/pods/$podName/").header(Pair("Authentication", "token $token"))
+    return "Hej"
 }
