@@ -14,7 +14,6 @@ data class VolumeMount(
 data class Container(
         val name: String,
         val volumeMounts: List<VolumeMount>
-
 )
 
 data class PersistentVolumeClaim(
@@ -39,7 +38,6 @@ fun GetVolumeNames(podName: String, namespace: String): String {
     val podJson = fetchPodDescription(podName, namespace)
     val podDescription = parsePodJson(podJson)
 
-
     return "hej"
 }
 
@@ -50,33 +48,24 @@ fun parsePodJson(podDescription: String): PodDescription {
     return mapper.readValue<PodDescription>(podDescription)
 }
 
-fun matchMountPathsToPVCs(containerName: String, podDescription: PodDescription): Map<String, String> {
+fun matchClaimNameToMountPaths(thisContainerName: String, podDescription: PodDescription): Map<String, String> {
     val spec = podDescription.spec
 
     // Extract this container's volume mounts
-    val volumeMounts = spec.containers.first { it.name == containerName }.volumeMounts
+    val volumeMounts = spec.containers.first { it.name == thisContainerName }.volumeMounts
 
-    // Join volume mounts with their volumes
-    val volumeMountsToVolumes = volumeMounts.associateBy(
-            {volumeMount -> volumeMount},
-            {volumeMount ->
-                spec.volumes.first {
-                    volume -> volumeMount.name == volume.name
-                }
-            }
-    )
+    // Map volumeMounts into "name -> path"
+    val nameToMountPath = volumeMounts.associate { (name, mountPath) -> name to mountPath }
 
-    // Pick only volumes which are PersistentVolumeClaims
-    val filteredMountsToVolumes = volumeMountsToVolumes.filter {
-        (_, volume) -> volume.persistentVolumeClaim != null
-    }
-
-    // Map VolumeMount:Volume to mountPath:claimName
-    val mountPathToClaimName = filteredMountsToVolumes.map {
-        (volumeMount, volume) -> volumeMount.mountPath to volume.persistentVolumeClaim!!.claimName
+    // Map volumes into "claimName -> name"
+    val claimNameToName = spec.volumes.mapNotNull {
+        if (it.persistentVolumeClaim != null) it.persistentVolumeClaim.claimName to it.name else null
     }.toMap()
 
-    return mountPathToClaimName
+    // Join "claimName -> name" and "name -> path" into "claimName -> path"
+    return claimNameToName.mapNotNull { (claimName, name) ->
+        if (nameToMountPath.contains(name)) claimName to nameToMountPath[name]!! else null
+    }.toMap()
 }
 
 fun fetchPodDescription(podName: String, namespace: String): String {

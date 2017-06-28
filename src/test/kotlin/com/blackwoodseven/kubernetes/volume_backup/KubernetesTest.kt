@@ -349,11 +349,11 @@ class KubernetesTest : Spek({
             }
         }
 
-        describe("matchMountPathsToPVCs") {
+        describe("matchClaimNameToMountPaths") {
             it("should extract the relevant information about backup volumes") {
-                val volumesToBackup = matchMountPathsToPVCs("grafana", podDescription)
+                val volumesToBackup = matchClaimNameToMountPaths("grafana", podDescription)
                 assertEquals(hashMapOf(
-                    "/var/lib/grafana" to "grafana-volume"
+                    "grafana-volume" to "/var/lib/grafana"
                 ), volumesToBackup)
             }
         }
