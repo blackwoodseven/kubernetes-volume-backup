@@ -8,6 +8,6 @@ fun performCommand(command: String) {
     val rcloneProcess = Runtime.getRuntime().exec(command)
     rcloneProcess.waitFor()
 
-    val stdout = rcloneProcess.getInputStream().bufferedReader().use { it.readText() }
-    val stderr = rcloneProcess.getErrorStream().bufferedReader().use { it.readText() }
+    val stdout = rcloneProcess.inputStream.bufferedReader().use { it.readText() }
+    val stderr = rcloneProcess.errorStream.bufferedReader().use { it.readText() }
 }

@@ -3,11 +3,8 @@ package com.blackwoodseven.kubernetes.volume_backup
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
 import kotlin.test.assertEquals
 
-@RunWith(JUnit4::class)
 class KubernetesSpec : Spek({
     describe("Kubernetes") {
         val podDescription = PodDescription(
