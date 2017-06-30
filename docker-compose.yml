@@ -7,3 +7,9 @@ services:
     environment:
       BACKUP_DIRECTORIES: test
       AWS_DEFAULT_REGION: eu-west-1
+  test:
+    build: .
+    command: gradle -t test
+    volumes:
+    - .:/kubernetes-volume-backup
+    - ./mock-serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount/
