@@ -368,7 +368,7 @@ class KubernetesApiSpec: Spek({
                 }
             }
 
-            val result = fetchPodDescription(null, null, "some-pod-name", "some-namespace")
+            val result = fetchPodDescription("some-pod-name", "some-namespace")
             assertEquals(podDescription, result)
             assertEquals(
                     sentRequest?.url,

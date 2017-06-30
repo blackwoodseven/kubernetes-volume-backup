@@ -64,7 +64,7 @@ fun getKubernetesToken(): String? {
     }
 }
 
-fun fetchPodDescription(token: String?, cert: String?, podName: String, namespace: String): PodDescription? {
+fun fetchPodDescription(podName: String, namespace: String, token: String? = null, cert: String? = null): PodDescription? {
     var req = Fuel.get("https://api.k8s.dev.blackwoodseven.com/api/v1/namespaces/$namespace/pods/$podName/")
 
     if (token != null) {
