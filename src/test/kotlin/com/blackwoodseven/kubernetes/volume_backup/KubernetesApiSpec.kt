@@ -1,11 +1,16 @@
 package com.blackwoodseven.kubernetes.volume_backup
 
+import com.github.kittinunf.fuel.core.Client
+import com.github.kittinunf.fuel.core.FuelManager
+import com.github.kittinunf.fuel.core.Request
+import com.github.kittinunf.fuel.core.Response
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import java.net.URL
 import kotlin.test.assertEquals
 
-class KubernetesTest : Spek({
+class KubernetesApiSpec: Spek({
     val podJson = """{
   "apiVersion": "v1",
   "kind": "Pod",
@@ -302,60 +307,76 @@ class KubernetesTest : Spek({
   }
 }
 """
-
-    describe("Kubernetes") {
-        val podDescription = PodDescription(
-                PodSpec(
-                        listOf(
-                                Container(
-                                        "grafana",
-                                        listOf(
-                                                VolumeMount("cert-volume", "/certs"),
-                                                VolumeMount("grafana-storage", "/var/lib/grafana"),
-                                                VolumeMount("default-token-7wqfm", "/var/run/secrets/kubernetes.io/serviceaccount")
-                                        )
-                                ),
-                                Container(
-                                        "configmap-watcher",
-                                        listOf(
-                                                VolumeMount("cert-volume", "/certs"),
-                                                VolumeMount("default-token-7wqfm", "/var/run/secrets/kubernetes.io/serviceaccount")
-                                        )
-                                )
-                        ),
-                        listOf(
-                                Volume(
-                                        "cert-volume",
-                                        null
-                                ),
-                                Volume(
-                                        "grafana-storage",
-                                        PersistentVolumeClaim(
-                                                "grafana-volume"
-                                        )
-                                ),
-                                Volume(
-                                        "default-token-7wqfm",
-                                        null
-                                )
-                        )
-                )
-        )
-
-        describe("parsePodJson") {
-            it("should parse the podJson into the expected PodDescription") {
-                val actualPodDescription = parsePodJson(podJson)
-                assertEquals(podDescription, actualPodDescription)
-            }
+    val podDescription = PodDescription(
+            PodSpec(
+                    listOf(
+                            Container(
+                                    "grafana",
+                                    listOf(
+                                            VolumeMount("cert-volume", "/certs"),
+                                            VolumeMount("grafana-storage", "/var/lib/grafana"),
+                                            VolumeMount("default-token-7wqfm", "/var/run/secrets/kubernetes.io/serviceaccount")
+                                    )
+                            ),
+                            Container(
+                                    "configmap-watcher",
+                                    listOf(
+                                            VolumeMount("cert-volume", "/certs"),
+                                            VolumeMount("default-token-7wqfm", "/var/run/secrets/kubernetes.io/serviceaccount")
+                                    )
+                            )
+                    ),
+                    listOf(
+                            Volume(
+                                    "cert-volume",
+                                    null
+                            ),
+                            Volume(
+                                    "grafana-storage",
+                                    PersistentVolumeClaim(
+                                            "grafana-volume"
+                                    )
+                            ),
+                            Volume(
+                                    "default-token-7wqfm",
+                                    null
+                            )
+                    )
+            )
+    )
+    describe("parsePodJson") {
+        it("should parse the podJson into the expected PodDescription") {
+            val actualPodDescription = PodDescription.Deserializer().deserialize(podJson)
+            assertEquals(podDescription, actualPodDescription)
         }
+    }
 
-        describe("matchClaimNameToMountPaths") {
-            it("should extract the relevant information about backup volumes") {
-                val volumesToBackup = matchClaimNameToMountPaths("grafana", podDescription)
-                assertEquals(hashMapOf(
-                    "grafana-volume" to "/var/lib/grafana"
-                ), volumesToBackup)
+    describe("fetchPodDescription") {
+        it("should sent the correct request, and return the PodDescription structure") {
+            var sentRequest: Request? = null
+
+            //Mock the Fuel Client
+            val oldClient = FuelManager.instance.client
+            FuelManager.instance.client = object: Client {
+                override fun executeRequest(request: Request): Response {
+                    sentRequest = request
+                    return Response().apply {
+                        data = podJson.toByteArray()
+                        httpStatusCode = 200
+                        httpResponseMessage = "OK"
+                    }
+                }
             }
+
+            val result = fetchPodDescription(null, null, "some-pod-name", "some-namespace")
+            assertEquals(podDescription, result)
+            assertEquals(
+                    sentRequest?.url,
+                    URL("https://api.k8s.dev.blackwoodseven.com/api/v1/namespaces/some-namespace/pods/some-pod-name/")
+            )
+
+            //Restore the Fuel Client
+            FuelManager.instance.client = oldClient
         }
     }
 })
