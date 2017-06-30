@@ -5,7 +5,7 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import kotlin.test.assertEquals
 
-class RcloneTest : Spek ({
+class RcloneSpec : Spek ({
     describe("Rclone") {
         describe("buildRcloneCommand") {
             it("should build the correct command") {

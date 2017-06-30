@@ -5,7 +5,7 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 
-class MainTest : Spek({
+class MainSpec : Spek({
     describe("the system should be sane") {
         it("should calculate correctly") {
             assertEquals(4, 2 + 2)
