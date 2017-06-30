@@ -31,6 +31,7 @@ dependencies {
     compile 'com.github.kittinunf.fuel:fuel:1.7.0'
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     testCompile 'org.jetbrains.spek:spek-api:1.1.2'
+    testCompile "com.nhaarman:mockito-kotlin-kt1.1:1.5.0"
     testRuntime 'org.jetbrains.spek:spek-junit-platform-engine:1.1.2'
 }
 
