@@ -26,13 +26,19 @@ repositories {
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    compile 'com.natpryce:konfig:1.6.1.0'
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.7'
     compile 'com.github.kittinunf.fuel:fuel:1.7.0'
+    
+    // Kotlin-test
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+
+    // Spek
     testCompile 'org.jetbrains.spek:spek-api:1.1.2'
-    testCompile "com.nhaarman:mockito-kotlin-kt1.1:1.5.0"
+    testCompile 'org.junit.platform:junit-platform-launcher:1.0.0-M4'
     testRuntime 'org.jetbrains.spek:spek-junit-platform-engine:1.1.2'
+
+    // Mockito
+    testCompile "com.nhaarman:mockito-kotlin-kt1.1:1.5.0"
 }
 
 mainClassName = 'com.blackwoodseven.kubernetes.volume_backup.MainKt'

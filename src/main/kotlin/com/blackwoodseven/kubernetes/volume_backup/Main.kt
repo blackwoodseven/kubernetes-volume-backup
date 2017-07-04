@@ -1,30 +1,44 @@
 package com.blackwoodseven.kubernetes.volume_backup
 
-import com.natpryce.konfig.*
-import com.natpryce.konfig.ConfigurationProperties.Companion.systemProperties
+import java.time.Duration
+import java.time.format.DateTimeParseException
 
-object backup : PropertyGroup() {
-    val directories by stringType
-    val cron by stringType
-    val pod_name by stringType
-    val pod_namespace by stringType
-    val container_name by stringType
+data class Config(
+    val awsAccessKeyId: String,
+    val awsSecretAccessKey: String,
+    val awsDefaultRegion: String,
+    val awsS3BucketName: String,
+    val podName: String,
+    val namespace: String,
+    val backupContainerName: String,
+    val backupInterval: Duration
+)
+
+fun parseConfig(): Config {
+    val backupInterval = try {
+        Duration.parse(System.getenv("BACKUP_INTERVAL"))
+    } catch (e: DateTimeParseException) {
+        throw IllegalArgumentException(
+                "The given BACKUP_INTERVAL does not conform to the ISO 8601 Duration format: " +
+                        "https://en.wikipedia.org/wiki/ISO_8601#Durations", e
+        )
+    }
+
+    return Config(
+            System.getenv("AWS_ACCESS_KEY_ID"),
+            System.getenv("AWS_SECRET_ACCESS_KEY"),
+            System.getenv("AWS_DEFAULT_REGION"),
+            System.getenv("AWS_S3_BUCKET_NAME"),
+            System.getenv("K8S_POD_NAME"),
+            System.getenv("K8S_NAMESPACE"),
+            System.getenv("K8S_CONTAINER_NAME"),
+            backupInterval
+    )
 }
-
-object aws : PropertyGroup() {
-    val default_region by stringType
-    val bucket by stringType
-    val access_key_id by stringType
-    val secret_access_key by stringType
-}
-
-
 
 fun main(args : Array<String>) {
-    val config = systemProperties() overriding
-                 EnvironmentVariables()
-
-    println(config[backup.directories])
-    println(config[aws.default_region])
-
+    val config = parseConfig()
+    while(true) {
+//        sleep()
+    }
 }
