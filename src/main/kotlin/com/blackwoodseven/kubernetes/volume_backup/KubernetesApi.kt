@@ -64,11 +64,11 @@ fun getKubernetesToken(): String? {
     }
 }
 
-fun fetchPodDescription(podName: String, namespace: String, token: String? = null, cert: String? = null): PodDescription? {
-    var req = Fuel.get("https://api.k8s.dev.blackwoodseven.com/api/v1/namespaces/$namespace/pods/$podName/")
+fun fetchPodDescription(podName: String, namespace: String, kubernetesHostName: String = "kubernetes.default", token: String? = null): PodDescription? {
+    var req = Fuel.get("https://$kubernetesHostName/api/v1/namespaces/$namespace/pods/$podName/")
 
     if (token != null) {
-        req = req.header(Pair("Authentication", "token $token"))
+        req = req.header("Authorization" to "Bearer $token")
     }
     val (request, response, result) = req.responseObject(PodDescription.Deserializer())
     val (podDescription, error) = result

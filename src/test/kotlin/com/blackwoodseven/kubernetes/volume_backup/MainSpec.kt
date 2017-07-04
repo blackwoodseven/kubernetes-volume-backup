@@ -26,6 +26,7 @@ class MainSpec : Spek({
                     "K8S_POD_NAME" to "pod name",
                     "K8S_NAMESPACE" to "namespace",
                     "K8S_CONTAINER_NAME" to "backup container name",
+                    "K8S_API_HOSTNAME" to "somehost",
                     "BACKUP_INTERVAL" to "PT2H"
             ))
 
@@ -39,6 +40,7 @@ class MainSpec : Spek({
                     "pod name",
                     "namespace",
                     "backup container name",
+                    "somehost",
                     Duration.ofHours(2)
             ), config)
         }

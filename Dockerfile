@@ -30,4 +30,5 @@ RUN gradle classes
 RUN mkdir -p /root/.config/rclone/
 COPY rclone.conf /root/.config/rclone/
 
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["gradle", "run"]
