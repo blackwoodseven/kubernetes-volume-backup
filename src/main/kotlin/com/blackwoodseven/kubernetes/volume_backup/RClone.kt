@@ -10,4 +10,7 @@ fun performCommand(command: String) {
 
     val stdout = rcloneProcess.inputStream.bufferedReader().use { it.readText() }
     val stderr = rcloneProcess.errorStream.bufferedReader().use { it.readText() }
+
+    println("STDOUT From rclone:\n$stdout")
+    println("STDERR From rclone:\n$stderr")
 }
