@@ -1,11 +1,11 @@
 package com.blackwoodseven.kubernetes.volume_backup
 
-fun buildRcloneCommand(backupPath: String, target: String, namespace: String, pvcName: String): String {
-    return "rclone sync '$backupPath' '$target/$namespace/$pvcName'"
+fun buildRcloneCommand(backupPath: String, target: String, namespace: String, pvcName: String): List<String> {
+    return listOf("rclone", "sync", backupPath, "$target/$namespace/$pvcName")
 }
 
-fun performCommand(command: String) {
-    val rcloneProcess = Runtime.getRuntime().exec(command)
+fun performCommand(command: List<String>) {
+    val rcloneProcess = Runtime.getRuntime().exec(command.toTypedArray())
     println(rcloneProcess)
     rcloneProcess.waitFor()
 

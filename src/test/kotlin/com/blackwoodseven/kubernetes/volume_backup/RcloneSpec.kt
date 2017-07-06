@@ -16,7 +16,7 @@ class RcloneSpec : Spek ({
 
                 val command = buildRcloneCommand(backupPath, target, namespace, pvcName)
 
-                assertEquals("rclone sync \"$backupPath\" $target/$namespace/$pvcName", command)
+                assertEquals(listOf("rclone", "sync", backupPath, "$target/$namespace/$pvcName"), command)
             }
 
             it("should handle paths with spaces") {
@@ -27,7 +27,7 @@ class RcloneSpec : Spek ({
 
                 val command = buildRcloneCommand(backupPath, target, namespace, pvcName)
 
-                assertEquals("rclone sync \"$backupPath\" $target/$namespace/$pvcName", command)
+                assertEquals(listOf("rclone", "sync", backupPath, "$target/$namespace/$pvcName"), command)
             }
         }
     }

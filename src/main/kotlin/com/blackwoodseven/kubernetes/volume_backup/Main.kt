@@ -46,7 +46,7 @@ fun performBackup(config: Config, volumesToBackup: Map<String, String>) {
     logger.info { "Performing backup" }
     for ((volumeName, path) in volumesToBackup) {
         val command = buildRcloneCommand(path, "s3:${config.awsS3BucketName}", config.namespace, volumeName)
-        logger.info { "Executing command: \"$command\"" }
+        logger.info { "Executing command: $command" }
         performCommand(command)
     }
 }
