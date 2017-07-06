@@ -57,8 +57,7 @@ fun main(args : Array<String>) {
 
     logger.info { "Initializing..."}
     val token = getKubernetesToken()
-    val cert = getKubernetesCert()
-    val podDescription = fetchPodDescription(config.podName, config.namespace, config.kubernetesHostname, token, cert)
+    val podDescription = fetchPodDescription(config.podName, config.namespace, config.kubernetesHostname, token)
     if (podDescription == null) throw RuntimeException("Could not fetch pod description.")
     val volumesToBackup = matchClaimNameToMountPaths(config.backupContainerName, podDescription)
 

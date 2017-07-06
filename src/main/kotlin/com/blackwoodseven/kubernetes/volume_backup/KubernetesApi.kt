@@ -44,16 +44,6 @@ data class PodDescription(
     }
 }
 
-fun getKubernetesCert(): String? {
-    val certFile = File("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
-
-    return if (certFile.isFile && certFile.canRead()) {
-        certFile.readText()
-    } else {
-        null
-    }
-}
-
 fun getKubernetesToken(): String? {
     val tokenFile = File("/var/run/secrets/kubernetes.io/serviceaccount/token")
 
