@@ -10,24 +10,24 @@ class RcloneSpec : Spek ({
         describe("buildRcloneCommand") {
             it("should build the correct command") {
                 val backupPath = "/volumes/very-important-directory"
-                val target = "s3"
+                val target = "s3:some-bucket"
                 val namespace = "default"
                 val pvcName = "very-important-files-volume"
 
                 val command = buildRcloneCommand(backupPath, target, namespace, pvcName)
 
-                assertEquals("rclone sync \"$backupPath\" $target:$namespace/$pvcName", command)
+                assertEquals("rclone sync \"$backupPath\" $target/$namespace/$pvcName", command)
             }
 
             it("should handle paths with spaces") {
                 val backupPath = "/volumes/directory with spaces"
-                val target = "s3"
+                val target = "s3:some-bucket"
                 val namespace = "default"
                 val pvcName = "very-important-files-volume"
 
                 val command = buildRcloneCommand(backupPath, target, namespace, pvcName)
 
-                assertEquals("rclone sync \"$backupPath\" $target:$namespace/$pvcName", command)
+                assertEquals("rclone sync \"$backupPath\" $target/$namespace/$pvcName", command)
             }
         }
     }
