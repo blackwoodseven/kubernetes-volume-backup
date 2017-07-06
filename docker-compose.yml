@@ -4,9 +4,18 @@ services:
     build: .
     volumes:
     - .:/kubernetes-volume-backup
+    - ./mock-serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount/
     environment:
+      BACKUP_INTERVAL: PT10S
       BACKUP_DIRECTORIES: test
+      AWS_ACCESS_KEY_ID: somekeyid
+      AWS_SECRET_ACCESS_KEY: somesecretkey
       AWS_DEFAULT_REGION: eu-west-1
+      AWS_S3_BUCKET_NAME: bw7-k8s-dev-backup
+      K8S_POD_NAME: somepod
+      K8S_NAMESPACE: somenamespace
+      K8S_CONTAINER_NAME: kubernetes-volume-backup
+      K8S_API_HOSTNAME: api.k8s.dev.blackwoodseven.com
   test:
     build: .
     command: gradle -t test
