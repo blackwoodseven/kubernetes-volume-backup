@@ -10,7 +10,7 @@ import org.jetbrains.spek.api.dsl.it
 import java.net.URL
 import kotlin.test.assertEquals
 
-class KubernetesApiSpec: Spek({
+class KubernetesApiSpec : Spek({
     val podJson = """{
   "apiVersion": "v1",
   "kind": "Pod",
@@ -352,12 +352,15 @@ class KubernetesApiSpec: Spek({
     }
 
     describe("fetchPodDescription") {
-        it("should sent the correct request, and return the PodDescription structure") {
-            var sentRequest: Request? = null
+        var sentRequest: Request? = null
+        val oldClient = FuelManager.instance.client
 
-            //Mock the Fuel Client
-            val oldClient = FuelManager.instance.client
-            FuelManager.instance.client = object: Client {
+        beforeEachTest {
+            sentRequest = null
+        }
+
+        beforeGroup {
+            FuelManager.instance.client = object : Client {
                 override fun executeRequest(request: Request): Response {
                     sentRequest = request
                     return Response().apply {
@@ -367,16 +370,29 @@ class KubernetesApiSpec: Spek({
                     }
                 }
             }
+        }
 
+        afterGroup {
+            //Restore the Fuel Client
+            FuelManager.instance.client = oldClient
+        }
+
+        it("should send the correct request, and return the PodDescription structure") {
             val result = fetchPodDescription("some-pod-name", "some-namespace")
             assertEquals(podDescription, result)
             assertEquals(
                     sentRequest?.url,
-                    URL("https://api.k8s.dev.blackwoodseven.com/api/v1/namespaces/some-namespace/pods/some-pod-name/")
+                    URL("https://kubernetes.default/api/v1/namespaces/some-namespace/pods/some-pod-name/")
             )
+        }
 
-            //Restore the Fuel Client
-            FuelManager.instance.client = oldClient
+        it("should be possible to override the kubernetes hostname") {
+            val result = fetchPodDescription("some-pod-name", "some-namespace", "some.kubernetes.host")
+            assertEquals(podDescription, result)
+            assertEquals(
+                    sentRequest?.url,
+                    URL("https://some.kubernetes.host/api/v1/namespaces/some-namespace/pods/some-pod-name/")
+            )
         }
     }
 })
