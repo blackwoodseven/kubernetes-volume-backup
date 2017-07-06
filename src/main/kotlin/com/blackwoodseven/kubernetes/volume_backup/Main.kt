@@ -45,7 +45,7 @@ fun parseConfig(): Config {
 fun performBackup(config: Config, volumesToBackup: Map<String, String>) {
     logger.info { "Performing backup" }
     for ((volumeName, path) in volumesToBackup) {
-        val command = buildRcloneCommand(path, "S3", config.namespace, volumeName)
+        val command = buildRcloneCommand(path, "s3", config.namespace, volumeName)
         logger.info { "Executing command: \"$command\"" }
         performCommand(command)
     }
