@@ -5,6 +5,9 @@ Currently it only supports pushing backups to Amazon S3, but the architecture is
 
 **ATTENTION:** We strongly recommend that you enable versioning on your S3 bucket, so you will be able to retrieve overwritten versions of files.
 
+## Docker image
+The docker image for this project is available here: https://hub.docker.com/r/blackwoodseven/kubernetes-volume-backup/
+
 ## Usage
 To us this project for backing up your volumes, you must run it as a side-car in the pod which is using the volume. Configuration is at this point quite verbose.
 
@@ -108,3 +111,9 @@ The backups will be added to your S3 bucket, under the `<namespace>/<persistent-
 
 ## Bugs or issues?
 There's probably a lot of issues we haven't run into yet, but if you do, please file an issue here on Github, and we will try to help you out.
+
+## Development
+Currently it's not possible to try out the project outside of Kubernetes, but you can execute unittests using:
+
+    docker-compose build
+    docker-compose run test
