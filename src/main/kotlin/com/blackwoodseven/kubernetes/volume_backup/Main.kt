@@ -56,6 +56,7 @@ fun main(args : Array<String>) {
     val config = parseConfig()
 
     logger.info { "Initializing..."}
+    setRcloneConfig(config.awsDefaultRegion)
     val token = getKubernetesToken()
     val podDescription = fetchPodDescription(config.podName, config.namespace, config.kubernetesHostname, token)
     if (podDescription == null) throw RuntimeException("Could not fetch pod description.")
