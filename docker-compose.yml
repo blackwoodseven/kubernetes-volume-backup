@@ -4,7 +4,6 @@ services:
     build: .
     volumes:
     - .:/kubernetes-volume-backup
-    - ./mock-serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount/
     environment:
       BACKUP_INTERVAL: PT10S
       BACKUP_DIRECTORIES: test
@@ -21,4 +20,3 @@ services:
     command: gradle -t test
     volumes:
     - .:/kubernetes-volume-backup
-    - ./mock-serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount/
