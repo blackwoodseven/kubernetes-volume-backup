@@ -34,7 +34,7 @@ Example IAM Policy:
                 "s3:DeleteObject",
                 "s3:PutObject"
             ],
-            "Resource": "arn:aws:s3:::bw7-k8s-dev-backup"
+            "Resource": "arn:aws:s3:::<your-backup-bucket>"
         },
         {
             "Effect": "Allow",
@@ -44,7 +44,7 @@ Example IAM Policy:
                 "s3:DeleteObject",
                 "s3:PutObject"
             ],
-            "Resource": "arn:aws:s3:::bw7-k8s-dev-backup/*"
+            "Resource": "arn:aws:s3:::<your-backup-bucket>/*"
         }
     ]
 }
