@@ -11,9 +11,46 @@ The docker image for this project is available here:
 [![](https://img.shields.io/docker/pulls/blackwoodseven/kubernetes-volume-backup.svg)](https://hub.docker.com/r/blackwoodseven/kubernetes-volume-backup/)
 
 ## Usage
-To us this project for backing up your volumes, you must run it as a side-car in the pod which is using the volume. Configuration is at this point quite verbose.
+To us this project for backing up your volumes, you must run it as a side-car in the pod which is using the volume. You will also have to create a AWS IAM Policy to allow the container to push backups to S3
 
-For example if you have this deployment:
+Example IAM Policy:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListAllMyBuckets"
+            ],
+            "Resource": "arn:aws:s3:::*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:PutObject"
+            ],
+            "Resource": "arn:aws:s3:::bw7-k8s-dev-backup"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:PutObject"
+            ],
+            "Resource": "arn:aws:s3:::bw7-k8s-dev-backup/*"
+        }
+    ]
+}
+```
+
+Once you have your configuration you can deploy a backup container as a side-car with access to the volume you want to backup. For example if you have this deployment:
 
 ```yaml
 apiVersion: extensions/v1beta1
