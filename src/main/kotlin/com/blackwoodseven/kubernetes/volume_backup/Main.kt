@@ -1,5 +1,10 @@
 package com.blackwoodseven.kubernetes.volume_backup
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.ResponseDeserializable
 import mu.KotlinLogging
 import java.time.Duration
 import java.time.format.DateTimeParseException
@@ -19,9 +24,23 @@ data class Config(
 
 private val logger = KotlinLogging.logger {}
 
+data class AWSInstanceIdentity(
+        val region: String
+) {
+    class Deserializer: ResponseDeserializable<AWSInstanceIdentity> {
+        override fun deserialize(content: String): AWSInstanceIdentity {
+            val mapper = jacksonObjectMapper()
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
+            return mapper.readValue<AWSInstanceIdentity>(content)
+        }
+    }
+}
+
 fun parseConfig(): Config {
     val backupInterval = try {
-        Duration.parse(System.getenv("BACKUP_INTERVAL"))
+        val iso8601Duration = System.getenv("BACKUP_INTERVAL") ?: "PT1H"
+        Duration.parse(iso8601Duration)
     } catch (e: DateTimeParseException) {
         throw IllegalArgumentException(
                 "The given BACKUP_INTERVAL does not conform to the ISO 8601 Duration format: " +
@@ -32,14 +51,28 @@ fun parseConfig(): Config {
     return Config(
             System.getenv("AWS_ACCESS_KEY_ID"),
             System.getenv("AWS_SECRET_ACCESS_KEY"),
-            System.getenv("AWS_DEFAULT_REGION"),
+            System.getenv("AWS_DEFAULT_REGION") ?: resolveAWSRegion(),
             System.getenv("AWS_S3_BUCKET_NAME"),
             System.getenv("K8S_POD_NAME"),
-            System.getenv("K8S_NAMESPACE"),
-            System.getenv("K8S_CONTAINER_NAME"),
-            System.getenv("K8S_API_HOSTNAME"),
+            System.getenv("K8S_NAMESPACE") ?: "default",
+            System.getenv("K8S_CONTAINER_NAME") ?: "volume-backup",
+            System.getenv("K8S_API_HOSTNAME") ?: "kubernetes.default",
             backupInterval
     )
+}
+
+fun resolveAWSRegion(): String {
+    val url = "http://169.254.169.254/latest/dynamic/instance-identity/document"
+    val req = Fuel.get(url)
+    val (request, response, result) = req.responseObject(AWSInstanceIdentity.Deserializer())
+    val (podDescription, error) = result
+    if (error != null) {
+        throw error
+    }
+    if (podDescription?.region == null) {
+        throw Exception("AWS Region auto-detection failed, is this container running in AWS?")
+    }
+    return podDescription.region
 }
 
 fun performBackup(config: Config, volumesToBackup: Map<String, String>) {
@@ -54,6 +87,7 @@ fun performBackup(config: Config, volumesToBackup: Map<String, String>) {
 fun main(args : Array<String>) {
     logger.info { "Parsing Configuration" }
     val config = parseConfig()
+
 
     logger.info { "Initializing..."}
     setRcloneConfig(config.awsDefaultRegion)
