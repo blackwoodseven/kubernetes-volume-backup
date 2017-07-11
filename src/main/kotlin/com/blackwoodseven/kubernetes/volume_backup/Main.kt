@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import mu.KotlinLogging
+import java.net.InetAddress
 import java.time.Duration
 import java.time.format.DateTimeParseException
 import java.util.concurrent.TimeUnit
@@ -53,7 +54,7 @@ fun parseConfig(): Config {
             System.getenv("AWS_SECRET_ACCESS_KEY"),
             System.getenv("AWS_DEFAULT_REGION") ?: resolveAWSRegion(),
             System.getenv("AWS_S3_BUCKET_NAME"),
-            System.getenv("K8S_POD_NAME"),
+            System.getenv("K8S_POD_NAME") ?: InetAddress.getLocalHost().getHostName(),
             System.getenv("K8S_NAMESPACE") ?: "default",
             System.getenv("K8S_CONTAINER_NAME") ?: "volume-backup",
             System.getenv("K8S_API_HOSTNAME") ?: "kubernetes.default",
