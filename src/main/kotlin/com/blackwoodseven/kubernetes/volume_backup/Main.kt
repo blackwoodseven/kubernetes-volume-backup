@@ -76,6 +76,21 @@ fun resolveAWSRegion(): String {
     return podDescription.region
 }
 
+fun logConfig(config: Config) {
+    logger.info("""
+            Config Contains:
+            awsAccessKeyId: ${config.awsAccessKeyId}
+            awsSecretAccessKey: [hidden]
+            awsDefaultRegion: ${config.awsDefaultRegion}
+            awsS3BucketName: ${config.awsS3BucketName}
+            podName: ${config.podName}
+            namespace: ${config.namespace}
+            backupContainerName: ${config.backupContainerName}
+            kubernetesHostName: ${config.kubernetesHostname}
+            backupInterval: ${config.backupInterval}
+    """.trimIndent())
+}
+
 fun performBackup(config: Config, volumesToBackup: Map<String, String>) {
     logger.info { "Performing backup" }
     for ((volumeName, path) in volumesToBackup) {
@@ -88,7 +103,7 @@ fun performBackup(config: Config, volumesToBackup: Map<String, String>) {
 fun main(args : Array<String>) {
     logger.info { "Parsing Configuration" }
     val config = parseConfig()
-
+    logConfig(config)
 
     logger.info { "Initializing..."}
     setRcloneConfig(config.awsDefaultRegion)
