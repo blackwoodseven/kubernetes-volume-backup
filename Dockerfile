@@ -25,7 +25,7 @@ RUN gradle downloadDependencies
 
 # Compilation
 COPY . .
-RUN gradle classes
+RUN gradle jar
 
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["gradle", "run"]
+CMD ["java", "-jar", "build/libs/volume-backup.jar"]
