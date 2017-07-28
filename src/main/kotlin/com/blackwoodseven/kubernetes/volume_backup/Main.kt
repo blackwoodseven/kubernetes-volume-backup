@@ -74,7 +74,7 @@ fun parseConfig(): Config {
         "volume-backup"
     }()
     val k8sApiHostname = rawK8sApiHostname ?: {
-        logger.info { "kubernetes.default" }
+        logger.info { "No Kubernetes API Hostname specified, defaulting to \"kubernetes.default\"" }
         "kubernetes.default"
     }()
 
@@ -169,12 +169,13 @@ fun main(args : Array<String>) {
     val podDescription = fetchPodDescription(config.podName, config.namespace, config.kubernetesHostname, token) ?:
             throw RuntimeException("Could not fetch pod description.")
     val volumesToBackup = matchClaimNameToMountPaths(config.backupContainerName, podDescription)
+    val allVolumesToBackup = (volumesToBackup.toList() + (config.forcedPaths?.toList() ?: emptyList())).toMap()
 
     logger.info { "Waiting for 1 minute before starting backups" }
     TimeUnit.MINUTES.sleep(1)
 
     while(true) {
-        performBackup(config, volumesToBackup)
+        performBackup(config, allVolumesToBackup)
 
         logger.info { "Sleeping for ${config.backupInterval}" }
         TimeUnit.SECONDS.sleep(config.backupInterval.seconds)
