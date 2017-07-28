@@ -38,6 +38,9 @@ dependencies {
     testCompile 'org.junit.platform:junit-platform-launcher:1.0.0-M4'
     testRuntime 'org.jetbrains.spek:spek-junit-platform-engine:1.1.2'
 
+    // Hamcrest
+    testCompile "com.natpryce:hamkrest:1.4.1.0"
+
     // Mockito
     testCompile "com.nhaarman:mockito-kotlin-kt1.1:1.5.0"
 }

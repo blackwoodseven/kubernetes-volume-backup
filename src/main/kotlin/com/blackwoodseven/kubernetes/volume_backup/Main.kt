@@ -12,15 +12,16 @@ import java.time.format.DateTimeParseException
 import java.util.concurrent.TimeUnit
 
 data class Config(
-    val awsAccessKeyId: String,
-    val awsSecretAccessKey: String,
-    val awsDefaultRegion: String,
-    val awsS3BucketName: String,
-    val podName: String,
-    val namespace: String,
-    val backupContainerName: String,
-    val kubernetesHostname: String,
-    val backupInterval: Duration
+        val awsAccessKeyId: String?,
+        val awsSecretAccessKey: String?,
+        val awsDefaultRegion: String,
+        val awsS3BucketName: String,
+        val podName: String,
+        val namespace: String,
+        val backupContainerName: String,
+        val kubernetesHostname: String,
+        val backupInterval: Duration,
+        val forcedPaths: Map<String, String>?
 )
 
 private val logger = KotlinLogging.logger {}
@@ -39,8 +40,49 @@ data class AWSInstanceIdentity(
 }
 
 fun parseConfig(): Config {
+    val rawAwsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID")
+    val rawAwsSecretAccessKey = System.getenv("AWS_SECRET_ACCESS_KEY")
+    val rawAwsDefaultRegion = System.getenv("AWS_DEFAULT_REGION")
+    val rawAwsS3BucketName = System.getenv("AWS_S3_BUCKET_NAME")
+    val rawK8sPodName = System.getenv("K8S_POD_NAME")
+    val rawK8sNamespace = System.getenv("K8S_NAMESPACE")
+    val rawK8sContainerName = System.getenv("K8S_CONTAINER_NAME")
+    val rawK8sApiHostname = System.getenv("K8S_API_HOSTNAME")
+    val rawBackupInterval = System.getenv("BACKUP_INTERVAL")
+    val rawForcedPaths = System.getenv("FORCED_PATHS")
+
+    if (rawAwsAccessKeyId == null || rawAwsSecretAccessKey == null)
+        logger.info { "No AWS Access Key specified, assuming permissions are applied by IAM Role." }
+    if (rawAwsS3BucketName == null)
+        throw IllegalArgumentException("No S3 bucket specified")
+
+    val awsDefaultRegion = rawAwsDefaultRegion ?: {
+        logger.info { "No AWS Default Region specified, auto-detecting..."}
+        resolveAWSRegion()
+    }()
+    val k8sPodName = rawK8sPodName ?: {
+        val hostname = InetAddress.getLocalHost().hostName
+        logger.info { "No Pod Name given, defaulting to hostname \"$hostname\""}
+        hostname
+    }()
+    val k8sNamespace = rawK8sNamespace ?: {
+        logger.info { "No Namespace specified, defaulting to \"default\"" }
+        "default"
+    }()
+    val backupContainerName = rawK8sContainerName ?: {
+        logger.info { "No backup container name specified, defaulting to \"volume-backup\""}
+        "volume-backup"
+    }()
+    val k8sApiHostname = rawK8sApiHostname ?: {
+        logger.info { "kubernetes.default" }
+        "kubernetes.default"
+    }()
+
     val backupInterval = try {
-        val iso8601Duration = System.getenv("BACKUP_INTERVAL") ?: "PT1H"
+        val iso8601Duration = rawBackupInterval ?: {
+            logger.info { "No backup interval defined, defaulting to PT1H" }
+            "PT1H"
+        }()
         Duration.parse(iso8601Duration)
     } catch (e: DateTimeParseException) {
         throw IllegalArgumentException(
@@ -49,16 +91,31 @@ fun parseConfig(): Config {
         )
     }
 
+    val forcedPaths = if (rawForcedPaths == null) {
+        null
+    } else {
+        try {
+            val mapper = jacksonObjectMapper()
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            mapper.readValue<Map<String, String>>(rawForcedPaths)
+        } catch (e: IllegalStateException) {
+            throw IllegalArgumentException(
+                    "The given FORCED_BACKUP_PATHS could not be parsed, it must be a json object string, containing only strings", e
+            )
+        }
+    }
+
     return Config(
-            System.getenv("AWS_ACCESS_KEY_ID"),
-            System.getenv("AWS_SECRET_ACCESS_KEY"),
-            System.getenv("AWS_DEFAULT_REGION") ?: resolveAWSRegion(),
-            System.getenv("AWS_S3_BUCKET_NAME"),
-            System.getenv("K8S_POD_NAME") ?: InetAddress.getLocalHost().getHostName(),
-            System.getenv("K8S_NAMESPACE") ?: "default",
-            System.getenv("K8S_CONTAINER_NAME") ?: "volume-backup",
-            System.getenv("K8S_API_HOSTNAME") ?: "kubernetes.default",
-            backupInterval
+            rawAwsAccessKeyId,
+            rawAwsSecretAccessKey,
+            awsDefaultRegion,
+            rawAwsS3BucketName,
+            k8sPodName,
+            k8sNamespace,
+            backupContainerName,
+            k8sApiHostname,
+            backupInterval,
+            forcedPaths
     )
 }
 
@@ -68,7 +125,7 @@ fun resolveAWSRegion(): String {
     val (request, response, result) = req.responseObject(AWSInstanceIdentity.Deserializer())
     val (podDescription, error) = result
     if (error != null) {
-        throw error
+        throw Exception("AWS Region auto-detection failed, is this container running in AWS?", error)
     }
     if (podDescription?.region == null) {
         throw Exception("AWS Region auto-detection failed, is this container running in AWS?")
@@ -88,6 +145,7 @@ fun logConfig(config: Config) {
             backupContainerName: ${config.backupContainerName}
             kubernetesHostName: ${config.kubernetesHostname}
             backupInterval: ${config.backupInterval}
+            forcedPaths: ${config.forcedPaths}
     """.trimIndent())
 }
 
@@ -105,11 +163,11 @@ fun main(args : Array<String>) {
     val config = parseConfig()
     logConfig(config)
 
-    logger.info { "Initializing..."}
+    logger.info { "Initializing..." }
     setRcloneConfig(config.awsDefaultRegion)
     val token = getKubernetesToken()
-    val podDescription = fetchPodDescription(config.podName, config.namespace, config.kubernetesHostname, token)
-    if (podDescription == null) throw RuntimeException("Could not fetch pod description.")
+    val podDescription = fetchPodDescription(config.podName, config.namespace, config.kubernetesHostname, token) ?:
+            throw RuntimeException("Could not fetch pod description.")
     val volumesToBackup = matchClaimNameToMountPaths(config.backupContainerName, podDescription)
 
     logger.info { "Waiting for 1 minute before starting backups" }
