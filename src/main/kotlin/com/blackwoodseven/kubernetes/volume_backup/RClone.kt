@@ -2,8 +2,11 @@ package com.blackwoodseven.kubernetes.volume_backup
 
 import java.io.File
 
-fun buildRcloneCommand(backupPath: String, target: String, namespace: String, pvcName: String): List<String> {
-    return listOf("rclone", "sync", backupPath, "$target/$namespace/$pvcName")
+fun buildRcloneCommand(backupPath: String, target: String, namespace: String, pvcName: String, includes: List<String>? = null, excludes: List<String>? = null): List<String> {
+    val includeParams = includes?.flatMap {listOf("--include", it)} ?: emptyList()
+    val excludeParams = excludes?.flatMap {listOf("--exclude", it)} ?: emptyList()
+
+    return listOf("rclone", "sync", backupPath, "$target/$namespace/$pvcName") + includeParams + excludeParams
 }
 
 fun performCommand(command: List<String>) {

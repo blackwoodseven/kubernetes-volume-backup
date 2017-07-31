@@ -29,6 +29,43 @@ class RcloneSpec : Spek ({
 
                 assertEquals(listOf("rclone", "sync", backupPath, "$target/$namespace/$pvcName"), command)
             }
+
+            it("should handle includes") {
+                val backupPath = "/volumes/very-important-directory"
+                val target = "s3:some-bucket"
+                val namespace = "default"
+                val pvcName = "very-important-files-volume"
+                val includes = listOf("*.csv", "*.xlsx")
+
+                val command = buildRcloneCommand(backupPath, target, namespace, pvcName, includes)
+
+                assertEquals(listOf("rclone", "sync", backupPath, "$target/$namespace/$pvcName", "--include", "*.csv", "--include", "*.xlsx"), command)
+            }
+
+            it("should handle excludes") {
+                val backupPath = "/volumes/very-important-directory"
+                val target = "s3:some-bucket"
+                val namespace = "default"
+                val pvcName = "very-important-files-volume"
+                val excludes = listOf("*.csv", "*.xlsx")
+
+                val command = buildRcloneCommand(backupPath, target, namespace, pvcName, excludes = excludes)
+
+                assertEquals(listOf("rclone", "sync", backupPath, "$target/$namespace/$pvcName", "--exclude", "*.csv", "--exclude", "*.xlsx"), command)
+            }
+
+            it("should handle includes and excludes at the same time") {
+                val backupPath = "/volumes/very-important-directory"
+                val target = "s3:some-bucket"
+                val namespace = "default"
+                val pvcName = "very-important-files-volume"
+                val includes = listOf("*.txt", "*.jpg")
+                val excludes = listOf("*.csv", "*.xlsx")
+
+                val command = buildRcloneCommand(backupPath, target, namespace, pvcName, includes, excludes)
+
+                assertEquals(listOf("rclone", "sync", backupPath, "$target/$namespace/$pvcName", "--include", "*.txt", "--include", "*.jpg", "--exclude", "*.csv", "--exclude", "*.xlsx"), command)
+            }
         }
     }
 })

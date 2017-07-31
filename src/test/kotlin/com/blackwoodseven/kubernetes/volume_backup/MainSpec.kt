@@ -1,5 +1,9 @@
 package com.blackwoodseven.kubernetes.volume_backup
 
+import com.github.kittinunf.fuel.core.Client
+import com.github.kittinunf.fuel.core.FuelManager
+import com.github.kittinunf.fuel.core.Request
+import com.github.kittinunf.fuel.core.Response
 import com.natpryce.hamkrest.assertion.assert
 import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.has
@@ -20,7 +24,31 @@ class MainSpec : Spek({
     }
 
     describe("parseConfig") {
-        it("should fetch the configuration options from environtment variable") {
+        var sentRequest: Request? = null
+        val oldClient = FuelManager.instance.client
+
+        beforeEachTest {
+            sentRequest = null
+        }
+
+        beforeGroup {
+            FuelManager.instance.client = object : Client {
+                override fun executeRequest(request: Request): Response {
+                    sentRequest = request
+                    return Response().apply {
+                        httpStatusCode = 404
+                        httpResponseMessage = "Not Found"
+                    }
+                }
+            }
+        }
+
+        afterGroup {
+            //Restore the Fuel Client
+            FuelManager.instance.client = oldClient
+        }
+
+        it("should fetch the configuration options from environment variables") {
             setEnvironment(mapOf(
                     "AWS_ACCESS_KEY_ID" to "key id",
                     "AWS_SECRET_ACCESS_KEY" to "secret key",
@@ -31,7 +59,9 @@ class MainSpec : Spek({
                     "K8S_CONTAINER_NAME" to "backup container name",
                     "K8S_API_HOSTNAME" to "somehost",
                     "BACKUP_INTERVAL" to "PT2H",
-                    "FORCED_PATHS" to "{\"some-backup-name\":\"/some/forced/volume\"}"
+                    "FORCED_PATHS" to "{\"some-backup-name\":\"/some/forced/volume\"}",
+                    "INCLUDES" to "[\"*.csv\", \"*.xlsx\"]",
+                    "EXCLUDES" to "[\"*-malformed-*\", \"*-corrupted-*\"]"
             ))
 
             val config = parseConfig()
@@ -46,7 +76,9 @@ class MainSpec : Spek({
                     "backup container name",
                     "somehost",
                     Duration.ofHours(2),
-                    mapOf("some-backup-name" to "/some/forced/volume")
+                    mapOf("some-backup-name" to "/some/forced/volume"),
+                    listOf("*.csv", "*.xlsx"),
+                    listOf("*-malformed-*", "*-corrupted-*")
             ), config)
         }
 
@@ -84,6 +116,8 @@ class MainSpec : Spek({
                     "volume-backup",
                     "kubernetes.default",
                     Duration.ofHours(1),
+                    null,
+                    null,
                     null
             )))
         }

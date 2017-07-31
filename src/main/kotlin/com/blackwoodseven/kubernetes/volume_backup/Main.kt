@@ -21,7 +21,9 @@ data class Config(
         val backupContainerName: String,
         val kubernetesHostname: String,
         val backupInterval: Duration,
-        val forcedPaths: Map<String, String>?
+        val forcedPaths: Map<String, String>?,
+        val includes: List<String>?,
+        val excludes: List<String>?
 )
 
 private val logger = KotlinLogging.logger {}
@@ -50,6 +52,8 @@ fun parseConfig(): Config {
     val rawK8sApiHostname = System.getenv("K8S_API_HOSTNAME")
     val rawBackupInterval = System.getenv("BACKUP_INTERVAL")
     val rawForcedPaths = System.getenv("FORCED_PATHS")
+    val rawIncludes = System.getenv("INCLUDES")
+    val rawExcludes = System.getenv("EXCLUDES")
 
     if (rawAwsAccessKeyId == null || rawAwsSecretAccessKey == null)
         logger.info { "No AWS Access Key specified, assuming permissions are applied by IAM Role." }
@@ -95,12 +99,34 @@ fun parseConfig(): Config {
         null
     } else {
         try {
-            val mapper = jacksonObjectMapper()
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            mapper.readValue<Map<String, String>>(rawForcedPaths)
+            jacksonObjectMapper().readValue<Map<String, String>>(rawForcedPaths)
         } catch (e: IllegalStateException) {
             throw IllegalArgumentException(
                     "The given FORCED_BACKUP_PATHS could not be parsed, it must be a json object string, containing only strings", e
+            )
+        }
+    }
+
+    val includes = if (rawIncludes == null) {
+        null
+    } else {
+        try {
+            jacksonObjectMapper().readValue<List<String>>(rawIncludes)
+        } catch (e: IllegalStateException) {
+            throw IllegalArgumentException(
+                    "The given INCLUDES could not be parsed, it must be a json list of include patterns", e
+            )
+        }
+    }
+
+    val excludes = if (rawIncludes == null) {
+        null
+    } else {
+        try {
+            jacksonObjectMapper().readValue<List<String>>(rawExcludes)
+        } catch (e: IllegalStateException) {
+            throw IllegalArgumentException(
+                    "The given EXCLUDES could not be parsed, it must be a json list of include patterns", e
             )
         }
     }
@@ -115,7 +141,9 @@ fun parseConfig(): Config {
             backupContainerName,
             k8sApiHostname,
             backupInterval,
-            forcedPaths
+            forcedPaths,
+            includes,
+            excludes
     )
 }
 
@@ -146,13 +174,15 @@ fun logConfig(config: Config) {
             kubernetesHostName: ${config.kubernetesHostname}
             backupInterval: ${config.backupInterval}
             forcedPaths: ${config.forcedPaths}
+            includes: ${config.includes}
+            excludes: ${config.excludes}
     """.trimIndent())
 }
 
 fun performBackup(config: Config, volumesToBackup: Map<String, String>) {
     logger.info { "Performing backup" }
     for ((volumeName, path) in volumesToBackup) {
-        val command = buildRcloneCommand(path, "s3:${config.awsS3BucketName}", config.namespace, volumeName)
+        val command = buildRcloneCommand(path, "s3:${config.awsS3BucketName}", config.namespace, volumeName, config.includes, config.excludes)
         logger.info { "Executing command: $command" }
         performCommand(command)
     }
