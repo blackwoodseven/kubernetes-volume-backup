@@ -119,7 +119,7 @@ fun parseConfig(): Config {
         }
     }
 
-    val excludes = if (rawIncludes == null) {
+    val excludes = if (rawExcludes == null) {
         null
     } else {
         try {
